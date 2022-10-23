@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 
-image = cv2.imread('test_1.bmp')
+image = cv2.imread('test_2.bmp')
 
 
 test = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
