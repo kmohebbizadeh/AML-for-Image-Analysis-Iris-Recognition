@@ -23,10 +23,16 @@ pupil = cv2.HoughCircles(edges,cv2.HOUGH_GRADIENT,1,20,
 edges = cv2.Canny(test, 70, 150)
 iris = cv2.HoughCircles(edges,cv2.HOUGH_GRADIENT,1,40,
                             param2=35,minRadius=20,maxRadius=120)
-circles = np.append(np.array(pupil), np.array(iris), axis=0)
 
-for i in circles[0,:2,]:
-    cv2.circle(image,(i[0],i[1]),i[2],color = (0,255, 0), thickness = 2)
+circles = np.append(pupil, iris, axis=0)
+circles = np.uint16(np.around(circles))
+
+for circle in circles:
+    for value in circle:
+        center_x = value[0]
+        center_y = value[1]
+        radius = value[2]
+        cv2.circle(image,(center_x,center_y),radius,color = (0,255, 0), thickness = 2)
 
 cv2.imshow('detected circles',image)
 cv2.waitKey(0)
