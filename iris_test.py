@@ -42,7 +42,7 @@ edges = cv2.Canny(test, 40, 70)
 
 iris = cv2.HoughCircles(edges,cv2.HOUGH_GRADIENT,2,minDist = 1000,
                             param2=10,minRadius=pupil[2]+20,maxRadius=((pupil[2]*3)-10))
-print(iris)
+
 iris = np.uint16(np.around(iris))
 for value in iris[0,:]:
     iris_x = value[0]
@@ -65,3 +65,5 @@ result = cv2.bitwise_and(result, mask_iris)
 
 # cv2.imshow('detected circles',result)
 # cv2.waitKey(0)
+
+
