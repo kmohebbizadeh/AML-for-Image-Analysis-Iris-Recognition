@@ -50,11 +50,18 @@ for value in iris[0,:]:
     radius = value[2]
 iris = np.array([center_x, center_y, radius])
 
-cv2.circle(image,(iris[0],iris[1]),iris[2],color = (0,255, 0), thickness = 2)
-cv2.circle(image,(pupil[0],pupil[1]),pupil[2],color = (0,255, 0), thickness = 2)
+# cv2.circle(image,(iris[0],iris[1]),iris[2],color = (0,255, 0), thickness = 2)
+# cv2.circle(image,(pupil[0],pupil[1]),pupil[2],color = (0,255, 0), thickness = 2)
 
-cv2.imshow('detected circles',image)
-cv2.waitKey(0)
+# cv2.imshow('detected circles',image)
+# cv2.waitKey(0)
 
+base = np.zeros_like(image)
+mask_pupil = cv2.circle(base, (pupil[0], pupil[1]), pupil[2], (255,255,255), -1)
+mask_pupil = cv2.bitwise_not(mask_pupil)
+result = cv2.bitwise_and(image, mask_pupil)
+mask_iris = cv2.circle(base, (iris[0], iris[1]), iris[2], (255,255,255), -1)
+result = cv2.bitwise_and(result, mask_iris)
 
-
+# cv2.imshow('detected circles',result)
+# cv2.waitKey(0)
