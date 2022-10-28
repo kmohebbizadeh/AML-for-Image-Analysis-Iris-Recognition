@@ -16,12 +16,14 @@ for person in os.listdir(folder):
             for picture in os.listdir(folder + '/' + person + '/' + '1'):
                 if picture[-4:] != '.bmp':
                     continue
-                train_info['eye'+picture[-5]] = picture
+                path = folder + '/' + person + '/' + '1' + '/' + picture
+                train_info['eye'+picture[-5]] = path
         if file == '2':
             for picture in os.listdir(folder + '/' + person + '/' + '2'):
                 if picture[-4:] != '.bmp':
                     continue
-                test_info['eye'+picture[-5]] = picture
+                path = folder + '/' + person + '/' + '2' + '/' + picture
+                test_info['eye'+picture[-5]] = path
 
     train_df = train_df.append(train_info, ignore_index=True)
     test_df = test_df.append(test_info, ignore_index=True)
