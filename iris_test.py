@@ -33,13 +33,13 @@ result = cv2.bitwise_and(result, mask_background)
 # test = cv2.equalizeHist(result)
 # test = cv2.GaussianBlur(test,(15,15),0)
 
-# cv2.imshow('detected circles',result)
-# cv2.waitKey(0)
+cv2.imshow('detected circles',result)
+cv2.waitKey(0)
 
 edges = cv2.Canny(test, 50, 60)
 
-# cv2.imshow('detected circles',edges)
-# cv2.waitKey(0)
+cv2.imshow('detected circles',edges)
+cv2.waitKey(0)
 
 iris = cv2.HoughCircles(edges,cv2.HOUGH_GRADIENT,2,minDist = 1000,
                             param2=10,minRadius=pupil[2]+20,maxRadius=((pupil[2]*3)-10))
@@ -64,8 +64,8 @@ result = cv2.bitwise_and(image, mask_pupil)
 mask_iris = cv2.circle(base, (iris[0], iris[1]), iris[2], (255,255,255), -1)
 result = cv2.bitwise_and(result, mask_iris)
 
-# cv2.imshow('detected circles',result)
-# cv2.waitKey(0)
+cv2.imshow('detected circles',result)
+cv2.waitKey(0)
 
 ###########################
 iris_width = iris[2] - pupil[2]
@@ -74,8 +74,8 @@ iris_diameter = iris[2]*2
 theta = np.arange(0.00, np.pi * 2, 0.01) #array of columns in final image (goes to 6.28 because period is 2 pi)
 r = np.arange(0, iris[2]- pupil[2], 1) #array of rows in final image
 final = result[iris[1] - iris[2] : iris[1] + iris[2], iris[0] - iris[2] : iris[0] + iris[2]]
-# cv2.imshow('detected circles',final)
-# cv2.waitKey(0)
+cv2.imshow('detected circles',final)
+cv2.waitKey(0)
 print(final.shape)
 print(iris[2]*2)
 cartesian_img = np.empty(shape = [iris_width, iris_diameter, 3]) # empty array of dimensions of final image
@@ -101,9 +101,9 @@ cartesian_img = cartesian_img.astype('uint8')
 img = np.asarray(cartesian_img)
 # cv2.imshow('detected circles', img)
 # # cv2.waitKey(0)
-# plt.imshow(cartesian_img)
-# plt.show()
-
+plt.imshow(cartesian_img)
+plt.show()
+########################
 test = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 test = cv2.equalizeHist(test)
 # enhanced = cv2.cvtColor(test, cv2.COLOR_BGR2RGB)
