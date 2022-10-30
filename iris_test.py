@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
-image = cv2.imread('test_1.bmp')
+image = cv2.imread('test_4.bmp')
 
 
 test = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -111,3 +111,5 @@ test = cv2.equalizeHist(test)
 # plt.show()
 cv2.imshow('detected circles', test)
 cv2.waitKey(0)
+
+
