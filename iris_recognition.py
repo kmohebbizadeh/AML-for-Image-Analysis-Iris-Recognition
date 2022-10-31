@@ -46,7 +46,7 @@ class iris_detection:
             minDist=70,
             param2=50,
             minRadius=20,
-            maxRadius=60,
+            maxRadius=75,
         )
 
         pupil_edge = np.uint16(np.around(pupil_edge))
@@ -378,20 +378,22 @@ for index, row in train_df.iterrows():
 
 for index, row in test_df.iterrows():
     id = row["id"]
-
+    print(id)
     eye4 = iris_recognition(row["eye4"])
     new_row = {"id": id, "image": eye4}
     formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
 
 train_y = np.asarray(formatted_train_df["id"])
 train_x = formatted_train_df.drop(columns=["id"])
+train_x = np.asarray(train_x)
 train_x = train_x.reshape((len(train_x), 1))
 train_y = train_y.reshape((len(train_y), 1))
 
 test_y = np.asarray(formatted_test_df["id"])
-test_x = np.asarray(formatted_test_df["id"])
-test_x = test_x.reshape((len(train_x), 1))
-test_y = test_y.reshape((len(train_y), 1))
+test_x = formatted_test_df.drop(columns=["id"])
+test_x = np.asarray(test_x)
+test_x = test_x.reshape((len(test_x), 1))
+test_y = test_y.reshape((len(test_y), 1))
 
 LDA = LinearDiscriminantAnalysis()
 train_x = LDA.fit_transform(train_x, train_y)
@@ -399,6 +401,7 @@ test_x = LDA.transform(test_x)
 
 model = NearestCentroid()
 model.fit(train_x, train_y)
-predictions = model.predit(test_x)
+predictions = model.predict(test_x)
 
 accuracy = accuracy_score(train_y, predictions)
+print(accuracy)
