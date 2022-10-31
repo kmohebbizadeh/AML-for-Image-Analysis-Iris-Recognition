@@ -141,48 +141,81 @@ class iris_detection:
         self._img = image
 
     def iris_normalization(self):
+        # theta = np.arange(
+        #     0.00, np.pi * 2, 0.01
+        # )  # array of columns in final image (goes to 6.28 because period is 2 pi)
+        # r = np.arange(
+        #     0, self._iris_radius - self._pupil_radius, 1
+        # )  # array of rows in final image
+        # image = self._img
+        # final = image[
+        #     self._iris_center_x
+        #     - self._iris_radius : self._iris_center_x
+        #     + self._iris_radius,
+        #     self._iris_center_y
+        #     - self._iris_radius : self._iris_center_y
+        #     + self._iris_radius,
+        # ]
+        # # cv2.imshow('detected circles',final)
+        # # cv2.waitKey(0)
+        # cartesian_img = np.empty(
+        #     shape=[self._iris_radius - self._pupil_radius, self._iris_radius * 2, 3]
+        # )  # empty array of dimensions of final image
+        # m = interp1d(
+        #     [np.pi * 2, 0], [0, self._iris_radius * 2]
+        # )  # interpolate location on x axis
+        # # interpolation between x = values from 0 and 6.28 and y = 0 to width of final image
+
+        # # calculate all pixel values for normalized cartesian image
+        # for z in r:
+        #     i = z + self._pupil_radius
+        #     for j in theta:
+        #         # x = rcos(theta)
+        #         polarX = int((i * np.cos(j)) + self._iris_radius)
+        #         # y = rsin(theta)
+        #         polarY = int((i * np.sin(j)) + self._iris_radius)
+        #         cartesian_img[z][int(m(j) - 1)] = final[polarY][polarX]
+
+        # # cartesian_img = cartesian_img[:][pupil[2]:iris[2]] #patch
+        # cartesian_img = cartesian_img.astype("uint8")
+        # self._img = np.asarray(cartesian_img)
+        # # cv2.imshow('detected circles', img)
+        # # cv2.waitKey(0)
+        # # plt.imshow(self._img)
+        # # plt.show()
+
         theta = np.arange(
             0.00, np.pi * 2, 0.01
         )  # array of columns in final image (goes to 6.28 because period is 2 pi)
-        r = np.arange(
-            0, self._iris_radius - self._pupil_radius, 1
-        )  # array of rows in final image
-        image = self._img
-        final = image[
-            self._iris_center_x
-            - self._iris_radius : self._iris_center_x
-            + self._iris_radius,
-            self._iris_center_y
-            - self._iris_radius : self._iris_center_y
-            + self._iris_radius,
-        ]
-        # cv2.imshow('detected circles',final)
-        # cv2.waitKey(0)
+        r = np.arange(0, int(self._img.shape[0] / 2), 1)
+
+        # print(r.size)
         cartesian_img = np.empty(
-            shape=[self._iris_radius - self._pupil_radius, self._iris_radius * 2, 3]
+            shape=[r.size, int(self._img.shape[1]), 3]
         )  # empty array of dimensions of final image
+        # print(cartesian_img.shape)
+
         m = interp1d(
-            [np.pi * 2, 0], [0, self._iris_radius * 2]
+            [np.pi * 2, 0], [0, int(self._img.shape[1])]
         )  # interpolate location on x axis
         # interpolation between x = values from 0 and 6.28 and y = 0 to width of final image
 
         # calculate all pixel values for normalized cartesian image
-        for z in r:
-            i = z + self._pupil_radius
+        for i in r:
+            # i += pupil[2]
             for j in theta:
                 # x = rcos(theta)
-                polarX = int((i * np.cos(j)) + self._iris_radius)
+                polarX = int((i * np.cos(j)) + self._img.shape[1] / 2)
                 # y = rsin(theta)
-                polarY = int((i * np.sin(j)) + self._iris_radius)
-                cartesian_img[z][int(m(j) - 1)] = final[polarY][polarX]
+                polarY = int((i * np.sin(j)) + self._img.shape[0] / 2)
 
-        # cartesian_img = cartesian_img[:][pupil[2]:iris[2]] #patch
+                cartesian_img[i][int(m(j) - 1)] = self._img[polarY][polarX]
+
+        cartesian_img = cartesian_img[:][
+            self._pupil_radius : self._iris_radius
+        ]  # patch
         cartesian_img = cartesian_img.astype("uint8")
         self._img = np.asarray(cartesian_img)
-        # cv2.imshow('detected circles', img)
-        # cv2.waitKey(0)
-        # plt.imshow(self._img)
-        # plt.show()
 
     def image_enhancement(self):
         image = cv2.cvtColor(self._img, cv2.COLOR_BGR2GRAY)
@@ -330,7 +363,7 @@ formatted_test_df = pd.DataFrame(columns=["id", "image"])
 
 for index, row in train_df.iterrows():
     id = row["id"]
-
+    print(id)
     eye1 = iris_recognition(row["eye1"])
     new_row = {"id": id, "image": eye1}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
