@@ -212,9 +212,7 @@ class iris_detection:
 
                 cartesian_img[i][int(m(j) - 1)] = self._img[polarY][polarX]
 
-        cartesian_img = cartesian_img[:][
-            self._pupil_radius : self._iris_radius
-        ]  # patch
+        cartesian_img = cartesian_img[:][self._pupil_radius: self._iris_radius]
         cartesian_img = cartesian_img.astype("uint8")
         self._img = np.asarray(cartesian_img)
 
@@ -418,38 +416,46 @@ for index, row in train_df.iterrows():
     for i in range(len(eye3)):
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
+    # if entry == 9:
+    #     break
 
-print(formatted_train_df.shape)
 
-# entry = 0
-# for index, row in test_df.iterrows():
-#     id = row["id"]
-#
-#     eye4 = iris_recognition(row["eye4"])
-#     new_row = {"id": id}
-#     formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
-#     for i in range(eye4):
-#         formatted_test_df.loc[index].at[i] = eye4[i]
-#      entry += 1
+entry = 0
+for index, row in test_df.iterrows():
+    id = row["id"]
 
-# train_y = np.asarray(formatted_train_df["id"])
-# train_x = formatted_train_df.drop(columns=["id"])
-# train_x = np.asarray(train_x)
+    eye4 = iris_recognition(row["eye4"])
+    new_row = {"id": id}
+    formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
+    for i in range(len(eye4)):
+        formatted_test_df.loc[entry].at[i] = eye4[i]
+    entry += 1
+    # if entry == 3:
+    #     break
+# print(formatted_train_df.shape)
+# print(formatted_test_df.shape)
+
+
+train_y = np.asarray(formatted_train_df["id"])
+train_x = formatted_train_df.drop(columns=["id"])
+train_x = np.asarray(train_x)
 # train_x = train_x.reshape((len(train_x), 1))
 # train_y = train_y.reshape((len(train_y), 1))
-#
-# test_y = np.asarray(formatted_test_df["id"])
-# test_x = formatted_test_df.drop(columns=["id"])
-# test_x = np.asarray(test_x)
+
+test_y = np.asarray(formatted_test_df["id"])
+test_x = formatted_test_df.drop(columns=["id"])
+test_x = np.asarray(test_x)
 # test_x = test_x.reshape((len(train_x), 1))
 # test_y = test_y.reshape((len(train_y), 1))
-#
-# LDA = LinearDiscriminantAnalysis()
-# train_x = LDA.fit_transform(train_x, train_y)
-# test_x = LDA.transform(test_x)
-#
-# model = NearestCentroid()
-# model.fit(train_x, train_y)
-# predictions = model.predit(test_x)
-#
-# accuracy = accuracy_score(train_y, predictions)
+
+LDA = LinearDiscriminantAnalysis()
+train_x = LDA.fit_transform(train_x, train_y)
+test_x = LDA.transform(test_x)
+
+model = NearestCentroid()
+model.fit(train_x, train_y)
+predictions = model.predict(test_x)
+
+accuracy = accuracy_score(test_y, predictions)
+
+print(accuracy)
