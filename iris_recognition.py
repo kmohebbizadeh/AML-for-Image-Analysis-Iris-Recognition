@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from sklearn.neighbors import NearestCentroid
 from sklearn.metrics import accuracy_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from scipy.ndimage import generic_filter
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -46,7 +47,7 @@ class iris_detection:
             minDist=70,
             param2=50,
             minRadius=20,
-            maxRadius=75,
+            maxRadius=60,
         )
 
         pupil_edge = np.uint16(np.around(pupil_edge))
@@ -211,9 +212,7 @@ class iris_detection:
 
                 cartesian_img[i][int(m(j) - 1)] = self._img[polarY][polarX]
 
-        cartesian_img = cartesian_img[:][
-            self._pupil_radius : self._iris_radius
-        ]  # patch
+        cartesian_img = cartesian_img[:][self._pupil_radius: self._iris_radius]
         cartesian_img = cartesian_img.astype("uint8")
         self._img = np.asarray(cartesian_img)
 
@@ -309,10 +308,38 @@ class iris_detection:
         # plt.imshow(filtered_img)
 
         # standardizing image shape for classifier input
-        standard_size_img = cv2.resize(filtered_img, (250, 60))
+        self._img = cv2.resize(filtered_img, (512, 48))
         # plt.imshow(standard_size_img)
+        # plt.show()
+        # print(standard_size_img.shape)
         # standard_size_img.shape
-        return standard_size_img
+        # gray_img = cv2.cvtColor(standard_size_img, cv2.COLOR_BGR2GRAY)
+
+        vec = []
+        block_size = 8
+        kernel = [[1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1],
+                  [1,1,1,1,1,1,1,1]]
+        means = generic_filter(self._img, np.mean, footprint = kernel)
+        sds = generic_filter(self._img, np.std, footprint = kernel)
+        # print(sds.shape)
+        # print(means)
+        # plt.imshow(means)
+        # print(type(means))
+        # print(len(sds))
+
+        for i in range(0, self._img.shape[0], block_size):
+            for j in range(0, self._img.shape[1], block_size):
+                vec.append(means[i,j])
+                vec.append(sds[i,j])
+
+        vec = np.asarray(vec)
+        return vec
 
 
 def iris_recognition(path):
@@ -358,42 +385,68 @@ for person in os.listdir(folder):
 train_df = train_df.sort_values(by=["id"])
 test_df = test_df.sort_values(by=["id"])
 
-formatted_train_df = pd.DataFrame(columns=["id", "image"])
-formatted_test_df = pd.DataFrame(columns=["id", "image"])
+formatted_train_df = pd.DataFrame(columns=["id"])
+formatted_test_df = pd.DataFrame(columns=["id"])
 
+for i in range(768):
+    formatted_train_df[i] = None
+    formatted_test_df[i] = None
+
+entry = 0
 for index, row in train_df.iterrows():
     id = row["id"]
-    print(id)
+
     eye1 = iris_recognition(row["eye1"])
-    new_row = {"id": id, "image": eye1}
+    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye1)):
+        formatted_train_df.loc[entry].at[i] = eye1[i]
+    entry += 1
 
     eye2 = iris_recognition(row["eye2"])
-    new_row = {"id": id, "image": eye2}
+    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye2)):
+        formatted_train_df.loc[entry].at[i] = eye2[i]
+    entry += 1
 
     eye3 = iris_recognition(row["eye3"])
-    new_row = {"id": id, "image": eye3}
+    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye3)):
+        formatted_train_df.loc[entry].at[i] = eye3[i]
+    entry += 1
+    # if entry == 9:
+    #     break
 
+
+entry = 0
 for index, row in test_df.iterrows():
     id = row["id"]
-    print(id)
+
     eye4 = iris_recognition(row["eye4"])
-    new_row = {"id": id, "image": eye4}
+    new_row = {"id": id}
     formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
+    for i in range(len(eye4)):
+        formatted_test_df.loc[entry].at[i] = eye4[i]
+    entry += 1
+    # if entry == 3:
+    #     break
+# print(formatted_train_df.shape)
+# print(formatted_test_df.shape)
+
 
 train_y = np.asarray(formatted_train_df["id"])
 train_x = formatted_train_df.drop(columns=["id"])
 train_x = np.asarray(train_x)
-train_x = train_x.reshape((len(train_x), 1))
-train_y = train_y.reshape((len(train_y), 1))
+# train_x = train_x.reshape((len(train_x), 1))
+# train_y = train_y.reshape((len(train_y), 1))
 
 test_y = np.asarray(formatted_test_df["id"])
 test_x = formatted_test_df.drop(columns=["id"])
 test_x = np.asarray(test_x)
-test_x = test_x.reshape((len(test_x), 1))
-test_y = test_y.reshape((len(test_y), 1))
+# test_x = test_x.reshape((len(train_x), 1))
+# test_y = test_y.reshape((len(train_y), 1))
 
 LDA = LinearDiscriminantAnalysis()
 train_x = LDA.fit_transform(train_x, train_y)
@@ -403,5 +456,6 @@ model = NearestCentroid()
 model.fit(train_x, train_y)
 predictions = model.predict(test_x)
 
-accuracy = accuracy_score(train_y, predictions)
+accuracy = accuracy_score(test_y, predictions)
+
 print(accuracy)
