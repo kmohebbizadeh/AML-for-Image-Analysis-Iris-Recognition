@@ -47,7 +47,7 @@ class iris_detection:
             minDist=70,
             param2=50,
             minRadius=20,
-            maxRadius=60,
+            maxRadius=70,
         )
 
         pupil_edge = np.uint16(np.around(pupil_edge))
@@ -416,7 +416,7 @@ for index, row in train_df.iterrows():
     for i in range(len(eye3)):
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
-    # if entry == 9:
+    # if entry == 21:
     #     break
 
 
