@@ -187,6 +187,42 @@ class iris_detection:
             eyelid_circ_radius,
             color=(0, 0, 0),
             thickness=2)
+            
+               mask_eyelid = cv2.circle(
+            new_image,
+            (eyelid_circ_x, eyelid_circ_y),
+            eyelid_circ_radius,
+            color=(0, 0, 0),
+            thickness=2,
+        )
+
+        base = np.zeros_like(new_image)
+        result = cv2.bitwise_and(new_image, mask_eyelid)
+        
+        # TO-DO: this mask is only finding the last circle's coordinates so it's not removing both eyelids, just the last one
+        mask_background = cv2.circle(
+            base,
+            (eyelid_circ_x, eyelid_circ_y),
+            eyelid_circ_radius,
+            (255, 255, 255),
+            -1,
+        )
+        result = cv2.bitwise_or(result, mask_background)
+           
+        # finds white filled-in circles
+        ret, more_mask = cv2.threshold(result, 255, 255, cv2.THRESH_BINARY)
+        # plt.imshow(more_mask)
+
+        final = cv2.bitwise_not(more_mask)
+
+        final = cv2.bitwise_and(new_image, final)
+
+        final = cv2.equalizeHist(final)
+
+        self._img = final
+        
+        # resizing
+        self._img = cv2.resize(self._img, (250, 60))
 
         # eyelid_circ
 
