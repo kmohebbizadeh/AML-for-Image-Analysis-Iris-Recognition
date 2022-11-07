@@ -36,6 +36,7 @@ class iris_detection:
             self._img_og = cv2.cvtColor(self._img, cv2.COLOR_BGR2GRAY)
             self._img_height, self._img_width, _ = image.shape
             return True
+
     def iris_localization(self):
         image = cv2.GaussianBlur(self._img, (15, 15), 0)
         edges = cv2.Canny(image, 50, 100)
@@ -95,7 +96,14 @@ class iris_detection:
             self._iris_center_y = self._pupil_center_y
             self._iris_radius = value[2]
 
-        alt_radius = min([(self._img_width - self._iris_center_x), self._iris_center_x, (self._img_height - self._iris_center_y), self._iris_center_y ])
+        alt_radius = min(
+            [
+                (self._img_width - self._iris_center_x),
+                self._iris_center_x,
+                (self._img_height - self._iris_center_y),
+                self._iris_center_y,
+            ]
+        )
 
         if alt_radius < self._iris_radius:
             self._iris_radius = alt_radius
@@ -124,22 +132,28 @@ class iris_detection:
     def iris_normalization(self):
         image = self._img
         final = image[
-            self._iris_center_y - self._iris_radius : self._iris_center_y + self._iris_radius,
-            self._iris_center_x - self._iris_radius : self._iris_center_x + self._iris_radius
+            self._iris_center_y
+            - self._iris_radius : self._iris_center_y
+            + self._iris_radius,
+            self._iris_center_x
+            - self._iris_radius : self._iris_center_x
+            + self._iris_radius,
         ]
         theta = np.arange(0.00, np.pi * 2, 0.01)
         r = np.arange(0, self._iris_radius, 1)
 
-        cartesian_img = np.empty(shape=[self._iris_radius*2, self._iris_radius*2, 3])
+        cartesian_img = np.empty(
+            shape=[self._iris_radius * 2, self._iris_radius * 2, 3]
+        )
 
-        m = interp1d([np.pi * 2, 0], [0, self._iris_radius*2])
+        m = interp1d([np.pi * 2, 0], [0, self._iris_radius * 2])
 
         for z in r:
             for j in theta:
                 polarX = int((z * np.cos(j)) + self._iris_radius)
                 polarY = int((z * np.sin(j)) + self._iris_radius)
                 cartesian_img[z][int(m(j) - 1)] = final[polarY][polarX]
-        cartesian_img = cartesian_img[:][self._pupil_radius: self._iris_radius]
+        cartesian_img = cartesian_img[:][self._pupil_radius : self._iris_radius]
         cartesian_img = cartesian_img.astype("uint8")
         self._img = np.asarray(cartesian_img)
 
@@ -148,25 +162,17 @@ class iris_detection:
 
     def image_enhancement(self):
         image = cv2.cvtColor(self._img, cv2.COLOR_BGR2GRAY)
-        # image = cv2.equalizeHist(image)
-        # cv2.imshow('detected circles', image)
-        # cv2.waitKey(0)
-        # self._img = image
 
-        # enhanced_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # plt.imshow(enhanced_img)
-
-        # # noise reduction
+        # noise reduction
         ret, eyelid = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
         # cv2.imshow('detected circles', eyelid)
         # cv2.waitKey(0)
-        # # plt.imshow(eyelid)
         eyelid = cv2.GaussianBlur(image, (15, 15), 0)
         eyelid = cv2.Canny(eyelid, 40, 50)
-        cv2.imshow('detected circles', eyelid)
-        cv2.waitKey(0)
-        # # plt.imshow(eyelid)
-        #
+        # cv2.imshow("detected circles", eyelid)
+        # cv2.waitKey(0)
+
+        # find circles from image
         eyelid_circ = cv2.HoughCircles(
             eyelid,
             cv2.HOUGH_GRADIENT,
@@ -174,94 +180,69 @@ class iris_detection:
             minDist=120,
             param2=40,
             minRadius=15,
-            maxRadius=50,)
-
-        eyelid_circ = np.uint16(np.around(eyelid_circ))
-        for value in eyelid_circ[0, :]:
-            eyelid_circ_x = value[0]
-            eyelid_circ_y = value[1]
-            eyelid_circ_radius = value[2]
-            image = cv2.circle(
-            image,
-            (eyelid_circ_x, eyelid_circ_y),
-            eyelid_circ_radius,
-            color=(0, 0, 0),
-            thickness=2)
-            
-               mask_eyelid = cv2.circle(
-            new_image,
-            (eyelid_circ_x, eyelid_circ_y),
-            eyelid_circ_radius,
-            color=(0, 0, 0),
-            thickness=2,
+            maxRadius=50,
         )
 
-        base = np.zeros_like(new_image)
-        result = cv2.bitwise_and(new_image, mask_eyelid)
+        base = np.zeros_like(image)
+
+        # create mask from circles
+        if eyelid_circ is not None:
+            eyelid_circ = np.uint16(np.around(eyelid_circ))
+            for value in eyelid_circ[0, :]:
+                eyelid_circ_x = value[0]
+                eyelid_circ_y = value[1]
+                eyelid_circ_radius = value[2]
+                new_image = cv2.circle(
+                    image,
+                    (eyelid_circ_x, eyelid_circ_y),
+                    eyelid_circ_radius,
+                    color=(0, 0, 0),
+                    thickness=2,
+                )
+                mask_background = cv2.circle(
+                    base,
+                    (eyelid_circ_x, eyelid_circ_y),
+                    eyelid_circ_radius,
+                    (255, 255, 255),
+                    -1,
+                )
+
+            mask_eyelid = cv2.circle(
+                new_image,
+                (eyelid_circ_x, eyelid_circ_y),
+                eyelid_circ_radius,
+                color=(0, 0, 0),
+                thickness=2,
+            )
+
+            # overlay mask with original image in a serious of bitwise operators
+            result = cv2.bitwise_and(new_image, mask_eyelid)
+
+            result = cv2.bitwise_or(result, mask_background)
+
+            ret, white_mask = cv2.threshold(result, 254, 255, cv2.THRESH_BINARY)
+
+            final = cv2.bitwise_not(white_mask)
+
+            final = cv2.bitwise_and(new_image, final)
+
+            # histogram equalization
+            final = cv2.equalizeHist(final)
+
+            self._img = final
+            # standardize size of output
+            self._img = cv2.resize(self._img, (512, 48))
         
-        # TO-DO: this mask is only finding the last circle's coordinates so it's not removing both eyelids, just the last one
-        mask_background = cv2.circle(
-            base,
-            (eyelid_circ_x, eyelid_circ_y),
-            eyelid_circ_radius,
-            (255, 255, 255),
-            -1,
-        )
-        result = cv2.bitwise_or(result, mask_background)
-           
-        # finds white filled-in circles
-        ret, more_mask = cv2.threshold(result, 255, 255, cv2.THRESH_BINARY)
-        # plt.imshow(more_mask)
+        # if no circles, just equalize and resize the image
+        else:
+            self._img = cv2.equalizeHist(image)
+            self._img = cv2.resize(self._img, (512, 48))
 
-        final = cv2.bitwise_not(more_mask)
+    
 
-        final = cv2.bitwise_and(new_image, final)
-
-        final = cv2.equalizeHist(final)
-
-        self._img = final
-        
-        # resizing
-        self._img = cv2.resize(self._img, (250, 60))
-
-        # eyelid_circ
-
-        # base = np.zeros_like(image)
-        # mask_eyelid = cv2.circle(
-        #     image,
-        #     (eyelid_circ_x, eyelid_circ_y),
-        #     eyelid_circ_radius,
-        #     color=(0, 0, 0),
-        #     thickness=2,
-        # )
-        # cv2.imshow('detected circles', image)
-        # cv2.waitKey(0)
-        # res2 = cv2.bitwise_not(mask_eyelid)
-        # # plt.imshow(res2)
-        #
-        # mask_eyelid = cv2.bitwise_or(image, mask_eyelid)
-        # result = cv2.bitwise_and(image, mask_eyelid)
-        # mask_background = cv2.circle(
-        #     base,
-        #     (eyelid_circ_x, eyelid_circ_y),
-        #     eyelid_circ_radius,
-        #     (255, 255, 255),
-        #     -1,
-        # )
-        # result = cv2.bitwise_or(result, mask_background)
-        # # plt.imshow(result)
-        #
-        # ret, more_mask = cv2.threshold(result, 190, 255, cv2.THRESH_BINARY)
-        # # plt.imshow(more_mask)
-        #
-        # xd = cv2.bitwise_not(more_mask)
-        # xd = cv2.bitwise_and(image, xd)
-        # plt.imshow(xd)
-        # self._img = xd
-        # cv2.imshow('detected circles', self._img)
+        # cv2.imshow("detected circles", self._img)
         # cv2.waitKey(0)
 
-        # standardize size here
     def feature_extraction(self):
         # filter_size = 9
         # height = np.fix(filter_size / 2)
@@ -301,65 +282,87 @@ class iris_detection:
         # filtered_img1 = cv2.filter2D(self._img, cv2.CV_8UC3, gabor_filter)
         # filtered_img2 = cv2.filter2D(self._img, cv2.CV_8UC3, gabor_filter2)
 
+        # kernel parameters
         deltaX1 = 3
         deltaX2 = 4.5
         deltaY = 1.5
         f1 = 1 / deltaY
 
-        kernel1 = cv2.getGaborKernel(ksize=(9,9),
-                           sigma=deltaX1,
-                           theta=0,
-                           lambd=deltaY,
-                           gamma=1,
-                           psi=0,
-                           ktype=cv2.CV_32F)
-        kernel2 = cv2.getGaborKernel(ksize=(9,9),
-                   sigma=deltaX2,
-                   theta=0,
-                   lambd=deltaY,
-                   gamma=1,
-                   psi=0,
-                   ktype=cv2.CV_32F)
+        # kernel for first channel
+        kernel1 = cv2.getGaborKernel(
+            ksize=(9, 9),
+            sigma=deltaX1,
+            theta=0,
+            lambd=deltaY,
+            gamma=1,
+            psi=0,
+            ktype=cv2.CV_32F,
+        )
+        # kernel for second channel
+        kernel2 = cv2.getGaborKernel(
+            ksize=(9, 9),
+            sigma=deltaX2,
+            theta=0,
+            lambd=deltaY,
+            gamma=1,
+            psi=0,
+            ktype=cv2.CV_32F,
+        )
 
+        # applying kernels
         filtered_img1 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel1)
         filtered_img2 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel2)
-        cv2.imshow('detected circles', filtered_img1)
-        cv2.waitKey(0)
-        cv2.imshow('detected circles', filtered_img2)
-        cv2.waitKey(0)
+        # cv2.imshow("detected circles", filtered_img1)
+        # cv2.waitKey(0)
+        # cv2.imshow("detected circles", filtered_img2)
+        # cv2.waitKey(0)
 
-        # self._img = cv2.resize(self._img, (512, 48))
+        # filtered_img1 = cv2.resize(filtered_img1, (512, 48))
+        # filtered_img2 = cv2.resize(filtered_img2, (512, 48))
+        # print(filtered_img1.shape)
+
         # plt.imshow(standard_size_img)
         # plt.show()
         # print(standard_size_img.shape)
         # standard_size_img.shape
-        # gray_img = cv2.cvtColor(standard_size_img, cv2.COLOR_BGR2GRAY)
-        # gray_img = cv2.cvtColor(self._img, cv2.COLOR_BGR2GRAY)
-        # vec = []
-        # block_size = 8
-        # kernel = [[1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1],
-        #           [1,1,1,1,1,1,1,1]]
-        # means = generic_filter(self._img, np.mean, footprint = kernel)
-        # sds = generic_filter(self._img, np.std, footprint = kernel)
-        # # print(sds.shape)
-        # # print(means)
+
+        vec = []
+        block_size = 8
+        kernel = np.array([[1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1],
+                            [1,1,1,1,1,1,1,1]])
+
+        means1 = generic_filter(filtered_img1, np.mean, footprint = kernel)
+        sds1 = generic_filter(filtered_img1, np.std, footprint = kernel)
+
+        means2 = generic_filter(filtered_img2, np.mean, footprint = kernel)
+        sds2 = generic_filter(filtered_img2, np.std, footprint = kernel)
+
+        # print(sds.shape)
+        # print(means)
         # plt.imshow(means)
-        # # print(type(means))
-        # # print(len(sds))
-        #
-        # for i in range(0, self._img.shape[0], block_size):
-        #     for j in range(0, self._img.shape[1], block_size):
-        #         vec.append(means[i,j])
-        #         vec.append(sds[i,j])
-        #
-        # vec = np.asarray(vec)
-        # return vec
+        # print(type(means))
+        # print(len(sds))
+        
+        for i in range(0, filtered_img1.shape[0], block_size):
+            for j in range(0, filtered_img1.shape[1], block_size):
+                vec.append(means1[i,j])
+                vec.append(sds1[i,j])
+
+        for i in range(0, filtered_img2.shape[0], block_size):
+            for j in range(0, filtered_img2.shape[1], block_size):
+                vec.append(means2[i,j])
+                vec.append(sds2[i,j])
+        
+        vec = np.asarray(vec)
+        # print(vec.shape)
+        # print(vec)
+        return vec
 
 
 def iris_recognition(path):
@@ -368,9 +371,12 @@ def iris_recognition(path):
     iris.iris_localization()
     iris.iris_normalization()
     iris.image_enhancement()
-    # iris.feature_extraction()
+    feature_vector = iris.feature_extraction()
 
-    # return value
+    # print(feature_vector)
+    return feature_vector
+
+
 #
 # iris_recognition("test_1.bmp")
 # iris_recognition("test_2.bmp")
