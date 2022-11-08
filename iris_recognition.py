@@ -361,7 +361,7 @@ test_df = test_df.sort_values(by=["id"])
 formatted_train_df = pd.DataFrame(columns=["id"])
 formatted_test_df = pd.DataFrame(columns=["id"])
 
-for i in range(768):
+for i in range(1536):
     formatted_train_df[i] = None
     formatted_test_df[i] = None
 
@@ -390,8 +390,9 @@ for index, row in train_df.iterrows():
     for i in range(len(eye3)):
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
-#     if entry == 3:
-#         break
+    if entry == 15:
+    #     print(formatted_train_df)
+        break
 
 # process each image and store in test dataframe, only need fourth image for testing
 entry = 0
@@ -403,8 +404,8 @@ for index, row in test_df.iterrows():
     for i in range(len(eye4)):
         formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
-    # if entry == 25:
-    #     break
+    if entry == 5:
+        break
 
 # standardize dataframes for sklearn
 train_y = np.asarray(formatted_train_df["id"])
@@ -429,19 +430,14 @@ predictions = model.predict(test_x)
 
 # calculate metrics for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
-roc = metrics.roc_auc_score(test_y, predictions)
-f1 = metrics.f1_score(test_y, predictions)
-
-fpr, tpr, threshold = metrics.roc_curve(test_y, predictions)
+# fpr, tpr, threshold = metrics.roc_curve(test_y, predictions)
 
 
 print("Accuracy (CRR): ", accuracy)
-print("ROC score: ", roc)
-print("F1 score: ", f1)
 
-print("ROC Curves")
-plt.plot(fpr, tpr)
-plt.show()
+# print("ROC Curves")
+# plt.plot(fpr, tpr)
+# plt.show()
 
 
 
