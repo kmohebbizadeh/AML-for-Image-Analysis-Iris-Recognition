@@ -351,13 +351,13 @@ class iris_detection:
         
         for i in range(0, filtered_img1.shape[0], block_size):
             for j in range(0, filtered_img1.shape[1], block_size):
-                vec.append(means1[i,j])
-                vec.append(sds1[i,j])
+                vec.append(means1[i+4,j+4])
+                vec.append(sds1[i+4,j+4])
 
         for i in range(0, filtered_img2.shape[0], block_size):
             for j in range(0, filtered_img2.shape[1], block_size):
-                vec.append(means2[i,j])
-                vec.append(sds2[i,j])
+                vec.append(means2[i+4,j+4])
+                vec.append(sds2[i+4,j+4])
         
         vec = np.asarray(vec)
         # print(vec.shape)
@@ -420,31 +420,31 @@ formatted_test_df = pd.DataFrame(columns=["id"])
 for i in range(768):
     formatted_train_df[i] = None
     formatted_test_df[i] = None
-#
+
 entry = 0
-# for index, row in train_df.iterrows():
-#     id = row["id"]
-#
-#     eye1 = iris_recognition(row["eye1"])
-#     new_row = {"id": id}
-#     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
-#     for i in range(len(eye1)):
-#         formatted_train_df.loc[entry].at[i] = eye1[i]
-#     entry += 1
-#
-#     eye2 = iris_recognition(row["eye2"])
-#     new_row = {"id": id}
-#     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
-#     for i in range(len(eye2)):
-#         formatted_train_df.loc[entry].at[i] = eye2[i]
-#     entry += 1
-#
-#     eye3 = iris_recognition(row["eye3"])
-#     new_row = {"id": id}
-#     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
-#     for i in range(len(eye3)):
-#         formatted_train_df.loc[entry].at[i] = eye3[i]
-#     entry += 1
+for index, row in train_df.iterrows():
+    id = row["id"]
+
+    eye1 = iris_recognition(row["eye1"])
+    new_row = {"id": id}
+    formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye1)):
+        formatted_train_df.loc[entry].at[i] = eye1[i]
+    entry += 1
+
+    eye2 = iris_recognition(row["eye2"])
+    new_row = {"id": id}
+    formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye2)):
+        formatted_train_df.loc[entry].at[i] = eye2[i]
+    entry += 1
+
+    eye3 = iris_recognition(row["eye3"])
+    new_row = {"id": id}
+    formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
+    for i in range(len(eye3)):
+        formatted_train_df.loc[entry].at[i] = eye3[i]
+    entry += 1
 #     if entry == 3:
 #         break
 #
@@ -455,28 +455,28 @@ for index, row in test_df.iterrows():
     eye4 = iris_recognition(row["eye4"])
     new_row = {"id": id}
     formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
-    # for i in range(len(eye4)):
-    #     formatted_test_df.loc[entry].at[i] = eye4[i]
+    for i in range(len(eye4)):
+        formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
-    if entry == 25:
-        break
+    # if entry == 25:
+    #     break
 
-# train_y = np.asarray(formatted_train_df["id"])
-# train_x = formatted_train_df.drop(columns=["id"])
-# train_x = np.asarray(train_x)
-#
-# test_y = np.asarray(formatted_test_df["id"])
-# test_x = formatted_test_df.drop(columns=["id"])
-# test_x = np.asarray(test_x)
-#
-# LDA = LinearDiscriminantAnalysis()
-# train_x = LDA.fit_transform(train_x, train_y)
-# test_x = LDA.transform(test_x)
-#
-# model = NearestCentroid()
-# model.fit(train_x, train_y)
-# predictions = model.predict(test_x)
-#
-# accuracy = accuracy_score(test_y, predictions)
-#
-# print(accuracy)
+train_y = np.asarray(formatted_train_df["id"])
+train_x = formatted_train_df.drop(columns=["id"])
+train_x = np.asarray(train_x)
+
+test_y = np.asarray(formatted_test_df["id"])
+test_x = formatted_test_df.drop(columns=["id"])
+test_x = np.asarray(test_x)
+
+LDA = LinearDiscriminantAnalysis()
+train_x = LDA.fit_transform(train_x, train_y)
+test_x = LDA.transform(test_x)
+
+model = NearestCentroid()
+model.fit(train_x, train_y)
+predictions = model.predict(test_x)
+
+accuracy = accuracy_score(test_y, predictions)
+
+print(accuracy)
