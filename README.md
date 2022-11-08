@@ -111,3 +111,17 @@ an average of the "one versus the rest" and the "one versus one" method of class
 to determine the performance of the model.
 
 ### Limitations
+
+This program has some limitations. First and foremost, it is not capable of predicting that 
+an iris is not in the database. The nature of the nearest centroid classifier is to always
+assign it to the closest value it knows. With that being said, if we test on an iris that
+has not been fit to the model, this program has no output that would classify it as "not
+recognized."
+
+Next, is how the iris images are received. Luckily we were able to use professional eye 
+images that were not blurry, had too much noise and obstruction. If the program were to 
+encounter a blurry, obstructed eye, it would likely make a futile attempt at classifying it.
+
+Finally, our program is very slow. This could hinder its real life applications. There is 
+potential for efficiency optimization, but this is mostly a downfall of python and not
+necessarily the script itself.
