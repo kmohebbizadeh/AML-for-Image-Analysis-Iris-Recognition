@@ -369,41 +369,60 @@ for i in range(1536):
 entry = 0
 for index, row in train_df.iterrows():
     id = row["id"]
+    new_row = {"id": id}
 
     eye1 = iris_recognition(row["eye1"])
-    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
     for i in range(len(eye1)):
         formatted_train_df.loc[entry].at[i] = eye1[i]
     entry += 1
 
     eye2 = iris_recognition(row["eye2"])
-    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
     for i in range(len(eye2)):
         formatted_train_df.loc[entry].at[i] = eye2[i]
     entry += 1
 
     eye3 = iris_recognition(row["eye3"])
-    new_row = {"id": id}
     formatted_train_df = formatted_train_df.append(new_row, ignore_index=True)
     for i in range(len(eye3)):
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
-    if entry == 12:
+
+    if entry == 9:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
 entry = 0
 for index, row in test_df.iterrows():
     id = row["id"]
-    eye4 = iris_recognition(row["eye4"])
     new_row = {"id": id}
+
+    eye1 = iris_recognition(row["eye1"])
+    formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
+    for i in range(len(eye1)):
+        formatted_test_df.loc[entry].at[i] = eye1[i]
+    entry += 1
+
+    eye2 = iris_recognition(row["eye2"])
+    formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
+    for i in range(len(eye2)):
+        formatted_test_df.loc[entry].at[i] = eye2[i]
+    entry += 1
+
+    eye3 = iris_recognition(row["eye3"])
+    formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
+    for i in range(len(eye3)):
+        formatted_test_df.loc[entry].at[i] = eye3[i]
+    entry += 1
+
+    eye4 = iris_recognition(row["eye4"])
     formatted_test_df = formatted_test_df.append(new_row, ignore_index=True)
     for i in range(len(eye4)):
         formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
-    if entry == 2:
+
+    if entry == 8:
         break
 
 # standardize dataframes for sklearn
@@ -433,5 +452,5 @@ roc_ovr = metrics.roc_auc_score(test_y, predictions, multi_class="ovr", average=
 roc_ovo = metrics.roc_auc_score(test_y, predictions, multi_class="ovo", average="macro")
 
 print("ROC score (OVR): ", roc_ovr)
-print("ROC score (OVO): ", roc_ovr)
+print("ROC score (OVO): ", roc_ovo)
 print("Accuracy (CRR): ", accuracy)
