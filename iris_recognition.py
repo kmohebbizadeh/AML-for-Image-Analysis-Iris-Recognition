@@ -390,7 +390,7 @@ for index, row in train_df.iterrows():
     for i in range(len(eye3)):
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
-    if entry == 15:
+    if entry == 12:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -403,7 +403,7 @@ for index, row in test_df.iterrows():
     for i in range(len(eye4)):
         formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
-    if entry == 5:
+    if entry == 2:
         break
 
 # standardize dataframes for sklearn
@@ -426,22 +426,12 @@ model.fit(train_x, train_y)
 
 # predict based on the test data
 predictions = model.predict(test_x)
-# probabilities = model.predict_proba(test_x)
-
 
 # calculate metrics for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
-# fpr, tpr, threshold = metrics.roc_curve_ovo(test_y, predictions)
-# roc_ovr = metrics.roc_auc_score(test_y, probabilities, multi_class="ovr", average="macro")
-# roc_ovo = metrics.roc_auc_score(test_y, probabilities, multi_class="ovo", average="macro")
+roc_ovr = metrics.roc_auc_score(test_y, predictions, multi_class="ovr", average="macro")
+roc_ovo = metrics.roc_auc_score(test_y, predictions, multi_class="ovo", average="macro")
 
-# print(roc_ovr)
-# print(roc_ovo)
+print("ROC score (OVR): ", roc_ovr)
+print("ROC score (OVO): ", roc_ovr)
 print("Accuracy (CRR): ", accuracy)
-
-# print("ROC Curves")
-# plt.plot(fpr, tpr)
-# plt.show()
-
-
-

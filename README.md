@@ -107,7 +107,7 @@ belongs. This is our best metric for model performance.
 
 The Reciever Operator Characteristic (ROC) allows us to see whether we are getting false 
 positives or true negatives as our error if this were a binary class. However, we can use 
-an average of the "one versus the rest" method of classification to determine the performance
-of the model.
+an average of the "one versus the rest" and the "one versus one" method of classification
+to determine the performance of the model.
 
 ### Limitations
