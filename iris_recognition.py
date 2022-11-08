@@ -391,7 +391,6 @@ for index, row in train_df.iterrows():
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
     if entry == 15:
-    #     print(formatted_train_df)
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -427,12 +426,17 @@ model.fit(train_x, train_y)
 
 # predict based on the test data
 predictions = model.predict(test_x)
+# probabilities = model.predict_proba(test_x)
+
 
 # calculate metrics for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
-# fpr, tpr, threshold = metrics.roc_curve(test_y, predictions)
+# fpr, tpr, threshold = metrics.roc_curve_ovo(test_y, predictions)
+# roc_ovr = metrics.roc_auc_score(test_y, probabilities, multi_class="ovr", average="macro")
+# roc_ovo = metrics.roc_auc_score(test_y, probabilities, multi_class="ovo", average="macro")
 
-
+# print(roc_ovr)
+# print(roc_ovo)
 print("Accuracy (CRR): ", accuracy)
 
 # print("ROC Curves")
