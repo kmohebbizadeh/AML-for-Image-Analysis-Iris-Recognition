@@ -392,7 +392,7 @@ for index, row in train_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 18:
+    if entry == 6:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -426,7 +426,7 @@ for index, row in test_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 16:
+    if entry == 8:
         break
 
 # standardize dataframes for sklearn
@@ -463,8 +463,8 @@ def predict_proba(self, X):
 
 # calculate AUC for model evaluation
 pred_prob = predict_proba(model, test_x)
-pred_prob = np.argmax(pred_prob, axis = 1) # here is the index of the max probability
-
+# pred_prob = np.argmax(pred_prob, axis = 1) # here is the index of the max probability
+print(pred_prob)
 # here is the max of the probabiliites
 probs = []
 for prob in pred_prob:
@@ -494,18 +494,16 @@ for i in range(len(test_y)):
 print(success)
 print(probs)
 
-roc_ovr = metrics.roc_auc_score(success, probs, multi_class="ovr", average="macro")
-roc_ovo = metrics.roc_auc_score(success, probs, multi_class="ovo", average="macro")
+roc_ovr = metrics.roc_auc_score(success, probs)
+roc_ovo = metrics.roc_auc_score(success, probs)
 
 print("ROC score (OVR): ", roc_ovr)
 print("ROC score (OVO): ", roc_ovo)
 print("Accuracy (CRR): ", accuracy)
 
-fpr, tpr, thresholds = metrics.roc_curve(success, probs, pos_label=2)
+fpr, tpr, thresholds = metrics.roc_curve(success, probs)
 print(fpr)
 print(tpr)
 plt.plot(fpr, tpr)
 plt.show()
 
-# metrics.plot_roc_curve(model, success, pred_prob)
-# plt.show()
