@@ -392,7 +392,7 @@ for index, row in train_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 18:
+    if entry == 6:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -426,7 +426,7 @@ for index, row in test_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 16:
+    if entry == 4:
         break
 
 # standardize dataframes for sklearn
@@ -465,8 +465,18 @@ def predict_proba(self, X):
 pred_prob = predict_proba(model, test_x)
 
 # pred_prob = np.argmax(pred_prob, axis = 1)
-print(pred_prob)
+# print(pred_prob)
 print(pred_prob.shape)
+print(test_y.shape)
+print(predictions.shape)
+
+success = []
+for i in range(len(test_y)):
+    if test_y[i] == predictions[i]:
+        success.append(1)
+    else:
+        success.append(0)
+# print(success)
 
 # test_y = test_y.astype(int)
 # b = np.zeros((test_y.size, int(test_y.max()) + 2))
