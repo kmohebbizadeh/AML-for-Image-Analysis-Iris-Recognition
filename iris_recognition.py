@@ -330,12 +330,14 @@ def iris_recognition(path):
     feature_vector = iris.feature_extraction()
     return feature_vector
 
+
 # pseudo probability for evaluation
 def predict_proba(model, X):
     # calculate centroid distances and use softmax to convert to probabilities
     dist = pairwise_distances(X, model.centroids_, metric = model.metric)
     probabilities = softmax(dist)
     return probabilities
+
 
 ################
 # Implementation on Data
