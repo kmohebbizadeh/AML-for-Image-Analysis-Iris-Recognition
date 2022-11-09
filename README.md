@@ -9,8 +9,8 @@ as it consistently has a sharp edge an realtively similar sizes. Also if the
 quality of the images are good, it is almost always unobstructed by eyelids,
 unlike the iris. 
   - First we applied a gaussian blur to the image, then we used edge detection
-  and a houghes circles algorithm to detect circles. We put realtively strict 
-  set of parameterrs on houghes circles so that it only selects the strongest 
+  and a Hough's circles algorithm to detect circles. We put realtively strict 
+  set of parameterrs on Hough's circles so that it only selects the strongest 
   candidate of a circle in the image.
   - Note: we did not equalize these image because a pupil is already almost always 
   completely black, so equalizing the image would actually bring the surrounding
@@ -41,7 +41,7 @@ to normalization
 
 ### IrisNormalization
 
-For iris Normalization we follow a simple protocol to ensure standardized outputs for
+For iris normalization, we follow a simple protocol to ensure standardized outputs for
 comparison:
 
 - First we center the image around the center of the pupil with the boundaries of 
@@ -56,11 +56,11 @@ consist of only the iris rectangle.
 
 ### IrisEnhancement
 
-In Iris Enhancement we are looking to remove the noise in the normalized image
+In iris enhancement, we are looking to remove the noise in the normalized image
 and make the patterns more distinguishable.
 
 - First we have to remove the eyelids as they often cover part of the iris and 
-are considered noise. To do this we first apply a gaussian blur to remove the 
+are considered noise. To do this we first apply a Gaussian blur to remove the 
 texture noise from the image.
 - We then run the Hough's circles algorithm to detect the parabolic edges 
 that the eyelids have in the normalized image. The radius parameters are confined
@@ -123,7 +123,7 @@ to determine the performance of the model.
 
 ### Limitations
 
-This program has some limitations. First and foremost, it is not capable of predicting that 
+This program has a few limitations. First and foremost, it is not capable of predicting that 
 an iris is not in the database. The nature of the nearest centroid classifier is to always
 assign it to the closest value it knows. With that being said, if we test on an iris that
 has not been fit to the model, this program has no output that would classify it as "not
@@ -132,6 +132,11 @@ recognized."
 Next, is how the iris images are received. Luckily we were able to use professional eye 
 images that were not blurry, had too much noise and obstruction. If the program were to 
 encounter a blurry, obstructed eye, it would likely make a futile attempt at classifying it.
+
+Furthermore, in the images we are testing, the detection of noise is not fully precise.
+Sometimes, an overlapping eyelid will be so similar in brightness and color to the iris that 
+it is not detected in by our canny edge and parabolic detection algorithms. We believe that 
+when we exact this process, we can improve our model accuracy.
 
 Finally, our program is very slow. This could hinder its real life applications. There is 
 potential for efficiency optimization, but this is mostly a downfall of python and not
