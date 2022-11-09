@@ -114,8 +114,8 @@ test set) to determine which individual they belong to.
 The main indicator of this model is going to be accuracy, as this is a matching program
 not an authentication one. If it were authentication, we would look to limit the false
 positives as much as possible. But since this is just a matching program, we want to see
-how many people we can correctly match to their iris. In this case we have accuracy of around
-80% which means 80% of the test set was correctly matched to the person for which the iris 
+how many people we can correctly match to their iris. In this case we have accuracy of
+79.4% which means arond 80% of the test set was correctly matched to the person for which the iris 
 belongs. This is our best metric for model performance.
 
 The Receiver Operator Characteristic (ROC) allows us to see whether we are getting false 
@@ -147,4 +147,6 @@ necessarily the script itself.
 ### Peer Evaluation
 
 Both of us worked on every function and script of the project together in a peer-programming
-manner. We feel as if there was equal contribution across the board.
+manner. While some functions Kiyan contributed more (localization) and others Ethan
+contributed more (feature extraction), overall we feel as if there was equal contribution 
+across the board.
