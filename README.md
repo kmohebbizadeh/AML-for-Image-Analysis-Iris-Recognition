@@ -62,7 +62,7 @@ and make the patterns more distinguishable.
 - First we have to remove the eyelids as they often cover part of the iris and 
 are considered noise. To do this we first apply a gaussian blur to remove the 
 texture noise from the image.
-- We then run the houghes circles algorithm to detect the parabolic edges 
+- We then run the Hough's circles algorithm to detect the parabolic edges 
 that the eyelids have in the normalized image. The radius parameters are confined
 to ensure no small circle noise is detected and to limit the amount that can 
 be removed from the image without limiting its ability to detect the eyelid
@@ -76,7 +76,18 @@ to extract and compare.
 
 ### FeatureExtraction
 
-Ethan
+Feature extraction includes both applying a Gabor filter to our enhanced iris image and
+transforming the image into a one-dimensional vector to feed into our model.
+
+- We used the Gabor filter and modulating function equations given in Ma's paper. However, 
+the OpenCV function getGaborKernel utilizes additional parameters like theta, lambda, gamma, sigma, and psi. 
+Therefore, we compared both equations and modified the parameter values of getGaborKernel to ensure 
+that the kernel matched that in the paper (e.g. sigma = delta X, lambda = delta Y and theta = 0).
+- After building two kernels, one for each channel, we applied them to the image to
+create two images that highlight the textures of the iris more.
+- To format these images into something more computer-readable, we collected the pixel means and 
+standard deviations using an 8x8 kernel traversing the two images.
+- Ultimately, these values capture the patterns that exist within the iris.
 
 ### IrisMatching
 
@@ -105,7 +116,7 @@ how many people we can correctly match to their iris. In this case we have accur
 80% which means 80% of the test set was correctly matched to the person for which the iris 
 belongs. This is our best metric for model performance.
 
-The Reciever Operator Characteristic (ROC) allows us to see whether we are getting false 
+The Receiver Operator Characteristic (ROC) allows us to see whether we are getting false 
 positives or true negatives as our error if this were a binary class. However, we can use 
 an average of the "one versus the rest" and the "one versus one" method of classification
 to determine the performance of the model.
