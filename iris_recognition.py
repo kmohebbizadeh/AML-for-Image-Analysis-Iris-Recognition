@@ -248,13 +248,15 @@ class iris_detection:
             self._img = cv2.resize(self._img, (512, 48))
 
     def feature_extraction(self):
+        # initial delta parameters
         deltaX1 = 3
         deltaX2 = 4.5
         deltaY = 1.5
 
+        # build kernels using parameters that satisfy and match the given equations
         # kernel for first channel
         kernel1 = cv2.getGaborKernel(
-            ksize=(9, 9),
+            ksize=(9, 9), # filter size
             sigma=deltaX1,
             theta=0,
             lambd=deltaY,
@@ -262,6 +264,7 @@ class iris_detection:
             psi=0,
             ktype=cv2.CV_32F,
         )
+
         # kernel for second channel
         kernel2 = cv2.getGaborKernel(
             ksize=(9, 9),
@@ -273,14 +276,14 @@ class iris_detection:
             ktype=cv2.CV_32F,
         )
 
-        # applying kernels
+        # applying kernels on image
         filtered_img1 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel1)
         filtered_img2 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel2)
 
         # apply mean and standard deviation filter to entire image
         vec = []
         block_size = 8
-        kernel = np.array([[1,1,1,1,1,1,1,1],
+        kernel = np.array([ [1,1,1,1,1,1,1,1],
                             [1,1,1,1,1,1,1,1],
                             [1,1,1,1,1,1,1,1],
                             [1,1,1,1,1,1,1,1],
@@ -295,7 +298,7 @@ class iris_detection:
         means2 = generic_filter(filtered_img2, np.mean, footprint = kernel)
         sds2 = generic_filter(filtered_img2, np.std, footprint = kernel)
 
-        # select values at the center of the kernel
+        # select values at the center of the kernel and add them to feature vector
         for i in range(0, filtered_img1.shape[0], block_size):
             for j in range(0, filtered_img1.shape[1], block_size):
                 # when selecting value we want to select the middle of the block hence i+4, j+4
@@ -308,7 +311,6 @@ class iris_detection:
                 vec.append(sds2[i+4,j+4])
         
         vec = np.asarray(vec)
-
         return vec
 
 
@@ -389,7 +391,8 @@ for index, row in train_df.iterrows():
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
 
-    if entry == 9:
+    print(entry)
+    if entry == 18:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -422,7 +425,8 @@ for index, row in test_df.iterrows():
         formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
 
-    if entry == 8:
+    print(entry)
+    if entry == 16:
         break
 
 # standardize dataframes for sklearn
@@ -446,10 +450,31 @@ model.fit(train_x, train_y)
 # predict based on the test data
 predictions = model.predict(test_x)
 
-# calculate metrics for model evaluation
+# calculate accuracy for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
-roc_ovr = metrics.roc_auc_score(test_y, predictions, multi_class="ovr", average="macro")
-roc_ovo = metrics.roc_auc_score(test_y, predictions, multi_class="ovo", average="macro")
+
+from sklearn.utils.extmath import softmax
+from sklearn.metrics.pairwise import pairwise_distances
+
+def predict_proba(self, X):
+    distances = pairwise_distances(X, self.centroids_, metric=self.metric)
+    probs = softmax(distances)
+    return probs
+
+# calculate AUC for model evaluation
+pred_prob = predict_proba(model, test_x)
+
+# pred_prob = np.argmax(pred_prob, axis = 1)
+print(pred_prob)
+print(pred_prob.shape)
+
+# test_y = test_y.astype(int)
+# b = np.zeros((test_y.size, int(test_y.max()) + 2))
+# b[np.arange(test_y.size), test_y] = 1
+
+
+roc_ovr = metrics.roc_auc_score(test_y, pred_prob, multi_class="ovr", average="macro")
+roc_ovo = metrics.roc_auc_score(test_y, pred_prob, multi_class="ovo", average="macro")
 
 print("ROC score (OVR): ", roc_ovr)
 print("ROC score (OVO): ", roc_ovo)
