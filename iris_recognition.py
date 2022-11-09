@@ -392,8 +392,8 @@ for index, row in train_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 6:
-        break
+    # if entry == 6:
+    #     break
 
 # process each image and store in test dataframe, only need fourth image for testing
 entry = 0
@@ -426,8 +426,8 @@ for index, row in test_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 8:
-        break
+    # if entry == 8:
+    #     break
 
 # standardize dataframes for sklearn
 train_y = np.asarray(formatted_train_df["id"])
@@ -506,4 +506,3 @@ print(fpr)
 print(tpr)
 plt.plot(fpr, tpr)
 plt.show()
-
