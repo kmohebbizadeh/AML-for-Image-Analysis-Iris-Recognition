@@ -3,16 +3,16 @@
 ################
 import cv2
 import numpy as np
-import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 from sklearn.neighbors import NearestCentroid
 from sklearn import metrics
 from sklearn.utils.extmath import softmax
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from scipy.ndimage import generic_filter
+from scipy.interpolate import interp1d
+import os
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -48,7 +48,7 @@ class iris_detection:
             return True
 
     def iris_localization(self):
-        # prep the image for detection
+        # prepare the image for detection
         image = cv2.GaussianBlur(self._img, (15, 15), 0) # 15x15 is a standard kernel
 
         # detect the pupil
@@ -91,7 +91,7 @@ class iris_detection:
         image = cv2.bitwise_and(image, mask_background) # mask 3x the pupils radius to narrow the iris search
 
         # prepare image for iris detection
-        image = cv2.equalizeHist(image) # light colored iris's need more contrast to detect
+        image = cv2.equalizeHist(image) # light colored irises need more contrast to detect
         image = cv2.GaussianBlur(image, (25, 25), 0) # stronger blur to remove noise
 
         # iris edge detection
@@ -163,30 +163,31 @@ class iris_detection:
         ]
 
         # transform image to rectangle
-        theta = np.arange(0.00, np.pi * 2, 0.01)
-        r = np.arange(0, self._iris_radius, 1)
+        theta = np.arange(0.00, np.pi * 2, 0.01) # array of columns in final image (goes to 6.28 because period is 2 pi)
+        r = np.arange(0, self._iris_radius, 1) # array of rows in final image
 
         cartesian_img = np.empty(
             shape=[self._iris_radius * 2, self._iris_radius * 2, 3]
-        )
+        ) # empty array of dimensions of final image
 
-        m = interp1d([np.pi * 2, 0], [0, self._iris_radius * 2])
+        m = interp1d([np.pi * 2, 0], [0, self._iris_radius * 2]) # interpolation between x = values from 0 and 6.28 and y = 0 to width of final image
 
+        # calculate all pixel values for normalized cartesian image
         for z in r:
             for j in theta:
                 polarX = int((z * np.cos(j)) + self._iris_radius)
                 polarY = int((z * np.sin(j)) + self._iris_radius)
                 cartesian_img[z][int(m(j) - 1)] = final[polarY][polarX]
-        cartesian_img = cartesian_img[:][self._pupil_radius : self._iris_radius]
+        cartesian_img = cartesian_img[:][self._pupil_radius : self._iris_radius] # crop out pupil part of image
         cartesian_img = cartesian_img.astype("uint8")
         self._img = np.asarray(cartesian_img)
 
     def image_enhancement(self):
         # prepare the image for feature extraction
         image = cv2.cvtColor(self._img, cv2.COLOR_BGR2GRAY)
-        eyelid = cv2.GaussianBlur(image, (15, 15), 0)
 
-        # run edge detection to find eyelids
+        # run blur and edge detection to find eyelids
+        eyelid = cv2.GaussianBlur(image, (15, 15), 0)
         eyelid = cv2.Canny(eyelid, 40, 50)
 
         eyelid_circ = cv2.HoughCircles(
@@ -202,8 +203,9 @@ class iris_detection:
         # create mask from detected circles to remove eyelids
         base = np.zeros_like(image)
 
-        if eyelid_circ is not None:
+        if eyelid_circ is not None: # if there are circles detected
             eyelid_circ = np.uint16(np.around(eyelid_circ))
+            # find values of each eyelid circle and create mask that includes each 
             for value in eyelid_circ[0, :]:
                 eyelid_circ_x = value[0]
                 eyelid_circ_y = value[1]
@@ -250,24 +252,26 @@ class iris_detection:
             self._img = cv2.resize(self._img, (512, 48))
 
     def feature_extraction(self):
-        # initial delta parameters
+        # initial delta parameters from paper
         deltaX1 = 3
         deltaX2 = 4.5
         deltaY = 1.5
 
         # build kernels using parameters that satisfy and match the given equations
+        # this is the same as the manual approach, just with the other parameters rightfully valued
+
         # kernel for first channel
         kernel1 = cv2.getGaborKernel(
-            ksize=(9, 9), # filter size
-            sigma=deltaX1,
-            theta=0,
-            lambd=deltaY,
-            gamma=1,
-            psi=0,
-            ktype=cv2.CV_32F,
+            ksize=(9, 9), # filter size is 9x9
+            sigma=deltaX1, # denominator in Gabor function
+            theta=0, # not applicable for the defined function
+            lambd=deltaY, # denominator in modulating function (f = 1/delta)
+            gamma=1, # must be 1 to keep y unchanged
+            psi=0, # not applicable so 0
+            ktype=cv2.CV_32F
         )
 
-        # kernel for second channel
+        # kernel for second channel (matches first except for sigma)
         kernel2 = cv2.getGaborKernel(
             ksize=(9, 9),
             sigma=deltaX2,
@@ -275,10 +279,10 @@ class iris_detection:
             lambd=deltaY,
             gamma=1,
             psi=0,
-            ktype=cv2.CV_32F,
+            ktype=cv2.CV_32F
         )
 
-        # applying kernels on image
+        # apply kernels on image
         filtered_img1 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel1)
         filtered_img2 = cv2.filter2D(self._img, cv2.CV_8UC3, kernel2)
 
@@ -303,7 +307,7 @@ class iris_detection:
         # select values at the center of the kernel and add them to feature vector
         for i in range(0, filtered_img1.shape[0], block_size):
             for j in range(0, filtered_img1.shape[1], block_size):
-                # when selecting value we want to select the middle of the block hence i+4, j+4
+                # when selecting value we want to select the middle of the block hence i + 4, j + 4
                 vec.append(means1[i+4,j+4])
                 vec.append(sds1[i+4,j+4])
 
@@ -324,14 +328,14 @@ def iris_recognition(path):
     iris.iris_normalization()
     iris.image_enhancement()
     feature_vector = iris.feature_extraction()
-
     return feature_vector
 
 # pseudo probability for evaluation
-def predict_proba(self, X):
-    distances = pairwise_distances(X, self.centroids_, metric=self.metric)
-    probs = softmax(distances)
-    return probs
+def predict_proba(model, X):
+    # calculate centroid distances and use softmax to convert to probabilities
+    dist = pairwise_distances(X, model.centroids_, metric = model.metric)
+    probabilities = softmax(dist)
+    return probabilities
 
 ################
 # Implementation on Data
@@ -399,11 +403,7 @@ for index, row in train_df.iterrows():
         formatted_train_df.loc[entry].at[i] = eye3[i]
     entry += 1
 
-    print(entry)
-    if entry == 9:
-        break
-
-# process each image and store in test dataframe, only need fourth image for testing
+# process each image and store in test dataframe
 entry = 0
 for index, row in test_df.iterrows():
     id = row["id"]
@@ -433,10 +433,6 @@ for index, row in test_df.iterrows():
         formatted_test_df.loc[entry].at[i] = eye4[i]
     entry += 1
 
-    print(entry)
-    if entry == 12:
-        break
-
 # standardize dataframes for sklearn
 train_y = np.asarray(formatted_train_df["id"])
 train_x = formatted_train_df.drop(columns=["id"])
@@ -461,13 +457,13 @@ predictions = model.predict(test_x)
 # calculate accuracy for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
 
-# calculate pseudo prediction probabilities for roc
+# calculate pseudo prediction probabilities for ROC
 pred_prob = predict_proba(model, test_x)
 probs = []
 for prob in pred_prob:
     probs.append(max(prob))
 
-# initialize success and failure array for roc
+# initialize success and failure array for ROC
 success = []
 for i in range(len(test_y)):
     if test_y[i] == predictions[i]:
@@ -479,12 +475,12 @@ for i in range(len(test_y)):
 roc_ovr = metrics.roc_auc_score(success, probs)
 roc_ovo = metrics.roc_auc_score(success, probs)
 
+# print final metrics
 print("ROC score (OVR): ", roc_ovr)
 print("ROC score (OVO): ", roc_ovo)
 print("Accuracy (CRR): ", accuracy)
 
-# plot roc curve
+# plot ROC curve
 fpr, tpr, thresholds = metrics.roc_curve(success, probs)
-
 plt.plot(fpr, tpr)
 plt.show()
