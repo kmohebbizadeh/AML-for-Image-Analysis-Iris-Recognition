@@ -114,14 +114,19 @@ test set) to determine which individual they belong to.
 The main indicator of this model is going to be accuracy, as this is a matching program
 not an authentication one. If it were authentication, we would look to limit the false
 positives as much as possible. But since this is just a matching program, we want to see
-how many people we can correctly match to their iris. In this case we have accuracy of
-79.4% which means arond 80% of the test set was correctly matched to the person for which the iris 
+how many people we can correctly match to their iris. In this case we have accuracy 
+around 80% of the test set was correctly matched to the person for which the iris 
 belongs. This is our best metric for model performance.
 
 The Receiver Operator Characteristic (ROC) allows us to see whether we are getting false 
 positives or true negatives as our error if this were a binary class. However, we can use 
 an average of the "one versus the rest" and the "one versus one" method of classification
-to determine the performance of the model.
+to determine the performance of the model. For this metric we had to create a synthetic 
+probability based on the distance from centroid since nearest centroid classifier is not
+a probability based classifier. Next, we have a multiclass classifier, therefore we needed
+to create a binary comparison array. This array consisted of a one versus rest format 
+where if the model predicted the person correctly it predicts one, otherwise it predicts
+0.
 
 ### Limitations
 

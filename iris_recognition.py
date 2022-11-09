@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from sklearn.neighbors import NearestCentroid
 from sklearn import metrics
+from sklearn.utils.extmath import softmax
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from scipy.ndimage import generic_filter
 import warnings
@@ -325,6 +327,12 @@ def iris_recognition(path):
 
     return feature_vector
 
+# pseudo probability for evaluation
+def predict_proba(self, X):
+    distances = pairwise_distances(X, self.centroids_, metric=self.metric)
+    probs = softmax(distances)
+    return probs
+
 ################
 # Implementation on Data
 ################
@@ -392,8 +400,8 @@ for index, row in train_df.iterrows():
     entry += 1
 
     print(entry)
-    # if entry == 6:
-    #     break
+    if entry == 9:
+        break
 
 # process each image and store in test dataframe, only need fourth image for testing
 entry = 0
@@ -426,8 +434,8 @@ for index, row in test_df.iterrows():
     entry += 1
 
     print(entry)
-    # if entry == 8:
-    #     break
+    if entry == 12:
+        break
 
 # standardize dataframes for sklearn
 train_y = np.asarray(formatted_train_df["id"])
@@ -453,27 +461,13 @@ predictions = model.predict(test_x)
 # calculate accuracy for model evaluation
 accuracy = metrics.accuracy_score(test_y, predictions)
 
-from sklearn.utils.extmath import softmax
-from sklearn.metrics.pairwise import pairwise_distances
-
-def predict_proba(self, X):
-    distances = pairwise_distances(X, self.centroids_, metric=self.metric)
-    probs = softmax(distances)
-    return probs
-
-# calculate AUC for model evaluation
+# calculate pseudo prediction probabilities for roc
 pred_prob = predict_proba(model, test_x)
-# pred_prob = np.argmax(pred_prob, axis = 1) # here is the index of the max probability
-print(pred_prob)
-# here is the max of the probabiliites
 probs = []
 for prob in pred_prob:
     probs.append(max(prob))
 
-# print(predictions)
-# print(pred_prob)
-# print(test_y)
-
+# initialize success and failure array for roc
 success = []
 for i in range(len(test_y)):
     if test_y[i] == predictions[i]:
@@ -481,19 +475,7 @@ for i in range(len(test_y)):
     else:
         success.append(0)
 
-# bin_array = np.ones(len(pred_prob))
-# for i in range(0, len(pred_prob)):
-#     if pred_prob[i] != int(test_y[i]):
-#         bin_array[i] = 0
-# print(bin_array)
-
-# test_y = test_y.astype(int)
-# b = np.zeros((test_y.size, int(test_y.max()) + 2))
-# b[np.arange(test_y.size), test_y] = 1
-
-print(success)
-print(probs)
-
+# calculate ROC scores
 roc_ovr = metrics.roc_auc_score(success, probs)
 roc_ovo = metrics.roc_auc_score(success, probs)
 
@@ -501,8 +483,8 @@ print("ROC score (OVR): ", roc_ovr)
 print("ROC score (OVO): ", roc_ovo)
 print("Accuracy (CRR): ", accuracy)
 
+# plot roc curve
 fpr, tpr, thresholds = metrics.roc_curve(success, probs)
-print(fpr)
-print(tpr)
+
 plt.plot(fpr, tpr)
 plt.show()
