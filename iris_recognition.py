@@ -21,6 +21,7 @@ warnings.filterwarnings("ignore")
 
 class iris_detection:
     def __init__(self, image_path):
+        # global variables to store important values and dimensions
         self._img = None
         self._img_og = None
         self._img_path = image_path
@@ -34,7 +35,6 @@ class iris_detection:
         self._iris_radius = None
 
     def load_image(self):
-
         image = cv2.imread(self._img_path)
 
         if type(image) is type(None): # test to make sure image read correctly
@@ -392,7 +392,7 @@ for index, row in train_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 6:
+    if entry == 18:
         break
 
 # process each image and store in test dataframe, only need fourth image for testing
@@ -426,7 +426,7 @@ for index, row in test_df.iterrows():
     entry += 1
 
     print(entry)
-    if entry == 4:
+    if entry == 16:
         break
 
 # standardize dataframes for sklearn
@@ -463,12 +463,16 @@ def predict_proba(self, X):
 
 # calculate AUC for model evaluation
 pred_prob = predict_proba(model, test_x)
+pred_prob = np.argmax(pred_prob, axis = 1) # here is the index of the max probability
 
-# pred_prob = np.argmax(pred_prob, axis = 1)
+# here is the max of the probabiliites
+probs = []
+for prob in pred_prob:
+    probs.append(max(prob))
+
+# print(predictions)
 # print(pred_prob)
-print(pred_prob.shape)
-print(test_y.shape)
-print(predictions.shape)
+# print(test_y)
 
 success = []
 for i in range(len(test_y)):
@@ -476,16 +480,32 @@ for i in range(len(test_y)):
         success.append(1)
     else:
         success.append(0)
-# print(success)
+
+# bin_array = np.ones(len(pred_prob))
+# for i in range(0, len(pred_prob)):
+#     if pred_prob[i] != int(test_y[i]):
+#         bin_array[i] = 0
+# print(bin_array)
 
 # test_y = test_y.astype(int)
 # b = np.zeros((test_y.size, int(test_y.max()) + 2))
 # b[np.arange(test_y.size), test_y] = 1
 
+print(success)
+print(probs)
 
-roc_ovr = metrics.roc_auc_score(test_y, pred_prob, multi_class="ovr", average="macro")
-roc_ovo = metrics.roc_auc_score(test_y, pred_prob, multi_class="ovo", average="macro")
+roc_ovr = metrics.roc_auc_score(success, probs, multi_class="ovr", average="macro")
+roc_ovo = metrics.roc_auc_score(success, probs, multi_class="ovo", average="macro")
 
 print("ROC score (OVR): ", roc_ovr)
 print("ROC score (OVO): ", roc_ovo)
 print("Accuracy (CRR): ", accuracy)
+
+fpr, tpr, thresholds = metrics.roc_curve(success, probs, pos_label=2)
+print(fpr)
+print(tpr)
+plt.plot(fpr, tpr)
+plt.show()
+
+# metrics.plot_roc_curve(model, success, pred_prob)
+# plt.show()
