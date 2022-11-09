@@ -1,4 +1,5 @@
 # AML-for-Image-Analysis
+## Ethan Evans and Kiyan Mohebbizadeh
 
 ### IrisLocalization
 
@@ -141,3 +142,8 @@ when we exact this process, we can improve our model accuracy.
 Finally, our program is very slow. This could hinder its real life applications. There is 
 potential for efficiency optimization, but this is mostly a downfall of python and not
 necessarily the script itself.
+
+### Peer Evaluation
+
+Both of us worked on every function and script of the project together in a peer-programming
+manner. We feel as if there was equal contribution across the board.
